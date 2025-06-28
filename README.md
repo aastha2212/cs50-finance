@@ -9,8 +9,8 @@ A comprehensive web application that simulates real stock trading using live mar
 
 ## 🌐 Live Demo
 
-- **Project Demo**: [GitHub Pages](https://yourusername.github.io/cs50-finance)
-- **Live Application**: [Render.com](https://your-app-name.onrender.com) *(Coming Soon)*
+- **Project Demo**: [GitHub Pages](https://aastha2212.github.io/cs50-finance)
+- **Live Application**: [Render.com](https://cs50-finance-0mi8.onrender.com) 
 
 ## 🚀 Features
 
