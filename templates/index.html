@@ -1,0 +1,156 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+    <form action="/index" method="post">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="text-start">Symbol</th>
+                    <th class="text-start">Name</th>
+                    <th class="text-end">Shares</th>
+                    <th class="text-end">Price</th>
+                    <th class="text-end">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in database %}
+                    <tr>
+                        <td class="text-start">{{ row["symbol"] }}</td>
+                        <td class="text-start">{{ row["name"] }}</td>
+                        <td class="text-end">{{ row["shares"] }}</td>
+                        <td class="text-end">{{ row["price"] | usd }}</td>
+                        <td class="text-end">{{ row["total"] | usd }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    {% for row in users %}
+                    <td class="border-0 fw-bold text-end" colspan="4">Cash</td>
+                    <td class="border-0 text-end">{{ row["cash"] | usd }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td class="border-0 fw-bold text-end" colspan="4">TOTAL</td>
+                    <td class="border-0 w-bold text-end">{{ sum | usd }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </form>
+    <div class="row mb-4 mt-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card">
+                <div class="card-header">Portfolio Value Over Time</div>
+                <div class="card-body">
+                    <div id="portfolioLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading portfolio data...</p>
+                    </div>
+                    <canvas id="portfolioLineChart" height="250" width="400" style="display: none;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Holdings Breakdown</div>
+                <div class="card-body">
+                    <div id="holdingsLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading holdings data...</p>
+                    </div>
+                    <canvas id="holdingsPieChart" height="250" width="400" style="display: none;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+// Portfolio Value Over Time
+fetch('/api/portfolio_history')
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('portfolioLoading').style.display = 'none';
+        const canvas = document.getElementById('portfolioLineChart');
+        canvas.style.display = 'block';
+        
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.date),
+                datasets: [{
+                    label: 'Portfolio Value',
+                    data: data.map(d => d.value),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0,123,255,0.1)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true, 
+                plugins: {legend: {display: false}},
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    })
+    .catch(error => {
+        document.getElementById('portfolioLoading').innerHTML = '<p class="text-danger">Error loading portfolio data</p>';
+        console.error('Portfolio chart error:', error);
+    });
+
+// Holdings Pie Chart
+fetch('/api/holdings_pie')
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('holdingsLoading').style.display = 'none';
+        const canvas = document.getElementById('holdingsPieChart');
+        canvas.style.display = 'block';
+        
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: data.map(d => d.symbol),
+                datasets: [{
+                    data: data.map(d => d.value),
+                    backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545','#6f42c1','#fd7e14','#20c997','#17a2b8']
+                }]
+            },
+            options: {
+                responsive: true, 
+                plugins: {
+                    legend: {position: 'bottom'},
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed;
+                                return context.label + ': $' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    })
+    .catch(error => {
+        document.getElementById('holdingsLoading').innerHTML = '<p class="text-danger">Error loading holdings data</p>';
+        console.error('Holdings chart error:', error);
+    });
+</script>
+{% endblock %}

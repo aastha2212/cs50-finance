@@ -1,0 +1,233 @@
+{% extends "layout.html" %}
+
+{% block title %}Quote{% endblock %}
+
+{% block main %}
+    <style>
+    #autocomplete-list, #watchlist-autocomplete {
+        width: 100%;
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        background: #fff;
+        z-index: 1000;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+    }
+    #autocomplete-list .list-group-item, #watchlist-autocomplete .list-group-item {
+        padding: 2px 12px;
+        font-size: 0.98rem;
+        cursor: pointer;
+        border: none;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        line-height: 1.3;
+    }
+    #autocomplete-list .list-group-item:last-child, #watchlist-autocomplete .list-group-item:last-child {
+        border-bottom: none;
+    }
+    #autocomplete-list .list-group-item.active,
+    #autocomplete-list .list-group-item:hover,
+    #watchlist-autocomplete .list-group-item.active,
+    #watchlist-autocomplete .list-group-item:hover {
+        background: #f0f0f0;
+    }
+    .autocomplete-container {
+        position: relative;
+    }
+    </style>
+    <form action="/quote" method="post" id="quote-form">
+        <div class="mb-3 d-flex flex-column flex-md-row align-items-center justify-content-center gap-2">
+            <div class="autocomplete-container">
+                <input autocomplete="off" autofocus class="form-control w-auto" id="company" placeholder="Type company name...">
+                <div id="autocomplete-list" class="list-group" style="display: none;"></div>
+            </div>
+            <input autocomplete="off" class="form-control w-auto" id="symbol" name="symbol" placeholder="Symbol" type="text" required>
+            <button class="btn btn-primary" type="submit">Quote</button>
+        </div>
+    </form>
+    <div class="mt-4">
+        <h5>Your Watchlist</h5>
+        <div id="watchlist" class="list-group"></div>
+        <div class="input-group mt-2 w-auto mx-auto" style="max-width: 400px; position: relative;">
+            <input type="text" id="watchlist-symbol" class="form-control" placeholder="Add symbol to watchlist" autocomplete="off">
+            <button class="btn btn-outline-secondary" id="add-watchlist-btn" type="button">Add</button>
+            <button class="btn btn-outline-primary" id="refresh-watchlist-btn" type="button" title="Refresh watchlist">↻</button>
+            <div id="watchlist-autocomplete" class="list-group position-absolute w-auto" style="z-index:10; left:0; right:0;"></div>
+        </div>
+    </div>
+
+<script>
+// --- Improved Autocomplete for company name to symbol ---
+function setupAutocomplete(inputId, listId, onSelect) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    let currentFocus = -1;
+    
+    input.addEventListener('input', async function() {
+        const q = this.value.trim();
+        if (!q) { 
+            list.style.display = 'none'; 
+            return; 
+        }
+        
+        // Add a small delay to prevent rapid API calls
+        clearTimeout(this.timeout);
+        this.timeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                
+                if (data.length > 0) {
+                    list.innerHTML = data.map((item, idx) => 
+                        `<button type='button' class='list-group-item list-group-item-action' data-symbol='${item.symbol}' data-name='${item.name}' data-idx='${idx}'>
+                            <strong>${item.symbol}</strong> - ${item.name}
+                        </button>`
+                    ).join('');
+                    list.style.display = 'block';
+                    currentFocus = -1;
+                } else {
+                    list.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Autocomplete error:', error);
+                list.style.display = 'none';
+            }
+        }, 300); // 300ms delay
+    });
+    
+    list.onclick = function(e) {
+        if (e.target.dataset.symbol) {
+            onSelect(e.target.dataset.symbol, e.target.dataset.name);
+            list.style.display = 'none';
+        }
+    };
+    
+    input.addEventListener('keydown', function(e) {
+        const items = list.querySelectorAll('button');
+        if (!items.length) return;
+        
+        if (e.key === 'ArrowDown') {
+            currentFocus = (currentFocus + 1) % items.length;
+            items.forEach((item, idx) => item.classList.toggle('active', idx === currentFocus));
+            e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+            currentFocus = (currentFocus - 1 + items.length) % items.length;
+            items.forEach((item, idx) => item.classList.toggle('active', idx === currentFocus));
+            e.preventDefault();
+        } else if (e.key === 'Enter' && currentFocus > -1) {
+            items[currentFocus].click();
+            e.preventDefault();
+        } else if (e.key === 'Escape') {
+            list.style.display = 'none';
+            currentFocus = -1;
+        }
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (!list.contains(e.target) && e.target !== input) {
+            // Add a small delay to allow clicking on dropdown items
+            setTimeout(() => {
+                if (!list.contains(document.activeElement)) {
+                    list.style.display = 'none';
+                    currentFocus = -1;
+                }
+            }, 150);
+        }
+    });
+}
+
+setupAutocomplete('company', 'autocomplete-list', (symbol, name) => {
+    document.getElementById('symbol').value = symbol;
+    document.getElementById('company').value = name;
+});
+
+setupAutocomplete('watchlist-symbol', 'watchlist-autocomplete', (symbol, text) => {
+    document.getElementById('watchlist-symbol').value = symbol;
+});
+// --- Watchlist Management ---
+let API_KEY = 'demo'; // Will be updated from server
+
+// Fetch API key from server
+async function loadConfig() {
+    try {
+        const res = await fetch('/api/config');
+        const config = await res.json();
+        API_KEY = config.finnhub_api_key;
+    } catch (error) {
+        console.error('Error loading config:', error);
+    }
+}
+
+async function loadWatchlist() {
+    try {
+        const res = await fetch('/watchlist');
+        const data = await res.json();
+        const wl = document.getElementById('watchlist');
+        if (data.length === 0) {
+            wl.innerHTML = '<div class="text-muted">No symbols in your watchlist.</div>';
+        } else {
+            wl.innerHTML = await Promise.all(data.map(async s => {
+                // Fetch company name and price from Finnhub
+                let name = s, price = '', change = '', changePercent = '';
+                try {
+                    const info = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${API_KEY}`).then(r => r.json());
+                    const meta = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${s}&token=${API_KEY}`).then(r => r.json());
+                    name = meta.name || s;
+                    
+                    if (info.c && info.c > 0) {
+                        price = `<span class='fw-bold' style='margin-right:8px;'>$${info.c.toFixed(2)}</span>`;
+                        
+                        // Calculate percentage change
+                        if (info.pc && info.pc > 0) {
+                            const percentChange = ((info.c - info.pc) / info.pc) * 100;
+                            const changeClass = percentChange > 0 ? 'text-success' : (percentChange < 0 ? 'text-danger' : 'text-muted');
+                            changePercent = `<span class='small ${changeClass}' style='margin-right:8px;'>${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2)}%</span>`;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Error fetching stock data for', s, error);
+                }
+                return `<div class='list-group-item d-flex justify-content-between align-items-center mb-2' style='max-width: 500px; margin:auto;'>
+                    <div class='d-flex align-items-center gap-2'>
+                        <strong style='font-size:1.1em;'>${s}</strong>
+                        <span class='text-muted small' style='margin-right:10px;'>${name}</span>
+                        ${price}
+                        ${changePercent}
+                    </div>
+                    <button class='btn btn-sm btn-outline-danger' style='padding:2px 8px;' onclick='removeFromWatchlist(\"${s}\")'>&times;</button>
+                </div>`;
+            })).then(items => items.join(''));
+        }
+    } catch (error) {
+        console.error('Error loading watchlist:', error);
+        document.getElementById('watchlist').innerHTML = '<div class="text-danger">Error loading watchlist.</div>';
+    }
+}
+async function addToWatchlist() {
+    const symbol = document.getElementById('watchlist-symbol').value.trim().toUpperCase();
+    if (!symbol) return;
+    const res = await fetch('/watchlist', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol})});
+    if (res.ok) loadWatchlist();
+    document.getElementById('watchlist-symbol').value = '';
+    document.getElementById('watchlist-autocomplete').innerHTML = '';
+}
+async function removeFromWatchlist(symbol) {
+    const res = await fetch('/watchlist', {method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol})});
+    if (res.ok) loadWatchlist();
+}
+document.getElementById('add-watchlist-btn').onclick = addToWatchlist;
+document.getElementById('refresh-watchlist-btn').onclick = loadWatchlist;
+
+// Load watchlist when page loads
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadConfig(); // Load API key first
+    setTimeout(loadWatchlist, 100); // Small delay to ensure page is ready
+});
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+
+{% block title %}Buy{% endblock %}
+
+{% block main %}
+    <style>
+    #autocomplete-list {
+        width: 100%;
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        background: #fff;
+        z-index: 1000;
+    }
+    #autocomplete-list .list-group-item {
+        padding: 2px 12px;
+        font-size: 0.98rem;
+        cursor: pointer;
+        border: none;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        line-height: 1.3;
+    }
+    #autocomplete-list .list-group-item:last-child {
+        border-bottom: none;
+    }
+    #autocomplete-list .list-group-item.active,
+    #autocomplete-list .list-group-item:hover {
+        background: #f0f0f0;
+    }
+    </style>
+    <form action="/buy" method="post" style="max-width: 400px; margin:auto;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label for="company" class="form-label">Company Name (autocomplete)</label>
+            <div style="position: relative;">
+                <input autocomplete="off" class="form-control" id="company" placeholder="Type company name..." style="width: 100%;">
+                <div id="autocomplete-list" class="list-group position-absolute w-100" style="z-index:10;"></div>
+                <input type="hidden" id="symbol" name="symbol">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="symbol-select" class="form-label">Popular Symbols</label>
+            <select class="form-select" id="symbol-select">
+                <option value="">--Select a popular symbol--</option>
+                <option value="AAPL">Apple (AAPL)</option>
+                <option value="GOOGL">Alphabet (GOOGL)</option>
+                <option value="MSFT">Microsoft (MSFT)</option>
+                <option value="AMZN">Amazon (AMZN)</option>
+                <option value="TSLA">Tesla (TSLA)</option>
+                <option value="META">Meta (META)</option>
+                <option value="NFLX">Netflix (NFLX)</option>
+                <option value="NVDA">NVIDIA (NVDA)</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="shares" class="form-label">Shares</label>
+            <input class="form-control" id="shares" name="shares" placeholder="Shares" type="number" min="1">
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Buy</button>
+    </form>
+<script>
+// --- Improved Autocomplete for company name to symbol ---
+function setupAutocomplete(inputId, listId, onSelect) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    let currentFocus = -1;
+    input.addEventListener('input', async function() {
+        const q = this.value.trim();
+        if (!q) { list.innerHTML = ''; return; }
+        const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        list.innerHTML = data.map((item, idx) => `<button type='button' class='list-group-item list-group-item-action' data-symbol='${item.symbol}' data-name='${item.name}' data-idx='${idx}'>${item.name} <span class='text-muted'>(${item.symbol})</span></button>`).join('');
+        currentFocus = -1;
+    });
+    list.onclick = function(e) {
+        if (e.target.dataset.symbol) {
+            onSelect(e.target.dataset.symbol, e.target.dataset.name);
+            list.innerHTML = '';
+        }
+    };
+    input.addEventListener('keydown', function(e) {
+        const items = list.querySelectorAll('button');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            currentFocus = (currentFocus + 1) % items.length;
+            items.forEach((item, idx) => item.classList.toggle('active', idx === currentFocus));
+            e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+            currentFocus = (currentFocus - 1 + items.length) % items.length;
+            items.forEach((item, idx) => item.classList.toggle('active', idx === currentFocus));
+            e.preventDefault();
+        } else if (e.key === 'Enter' && currentFocus > -1) {
+            items[currentFocus].click();
+            e.preventDefault();
+        }
+    });
+    document.addEventListener('click', function(e) {
+        if (!list.contains(e.target) && e.target !== input) list.innerHTML = '';
+    });
+}
+setupAutocomplete('company', 'autocomplete-list', (symbol, name) => {
+    document.getElementById('symbol').value = symbol;
+    document.getElementById('company').value = name;
+});
+// --- Popular Symbols Dropdown ---
+document.getElementById('symbol-select').onchange = async function() {
+    const symbol = this.value;
+    if (!symbol) return;
+    document.getElementById('symbol').value = symbol;
+    // Fetch company name from Finnhub
+    try {
+        const meta = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=d1fc5tpr01qig3h0ra0gd1fc5tpr01qig3h0ra10`).then(r => r.json());
+        document.getElementById('company').value = meta.name || symbol;
+    } catch { document.getElementById('company').value = symbol; }
+};
+</script>
+{% endblock %}
