@@ -8,3 +8,4 @@ CS50==9.0.0
 gunicorn==21.2.0
 setuptools
 pytz
+SQLAlchemy==1.4.49
