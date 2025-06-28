@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS50 Finance - Stock Trading Simulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 100px 0;
+        }
+        .feature-card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .tech-badge {
+            background: #007bff;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-4">CS50 Finance</h1>
+            <p class="lead mb-4">A comprehensive stock trading simulation platform built with Flask and Python</p>
+            <div class="mb-4">
+                <span class="tech-badge">Python</span>
+                <span class="tech-badge">Flask</span>
+                <span class="tech-badge">Bootstrap</span>
+                <span class="tech-badge">SQLite</span>
+                <span class="tech-badge">Chart.js</span>
+            </div>
+            <a href="https://github.com/yourusername/cs50-finance" class="btn btn-light btn-lg">View on GitHub</a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Key Features</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <h3 class="h5 mb-3">🔐 User Authentication</h3>
+                            <p>Secure registration and login with password hashing and session management</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <h3 class="h5 mb-3">📈 Real-time Trading</h3>
+                            <p>Buy and sell stocks with live market data from Finnhub API</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <h3 class="h5 mb-3">📊 Portfolio Management</h3>
+                            <p>Track holdings, cash balance, and portfolio performance with interactive charts</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <h3 class="h5 mb-3">⭐ Personal Watchlist</h3>
+                            <p>Monitor favorite stocks with real-time price updates and percentage changes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <h3 class="h5 mb-3">🔍 Smart Search</h3>
+                            <p>Intelligent autocomplete for stock symbols with company name suggestions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <h3 class="h5 mb-3">📱 Responsive Design</h3>
+                            <p>Works seamlessly on desktop, tablet, and mobile devices</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Project Screenshots</h2>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Portfolio Dashboard</h5>
+                            <p class="card-text">Interactive charts showing portfolio value over time and holdings breakdown</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Stock Trading Interface</h5>
+                            <p class="card-text">Real-time stock quotes and trading functionality with live market data</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Setup Section -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Quick Setup</h2>
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Local Development</h5>
+                            <pre class="bg-dark text-light p-3 rounded"><code># Clone the repository
+git clone https://github.com/yourusername/cs50-finance.git
+cd cs50-finance
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+cp env.example .env
+# Edit .env with your API keys
+
+# Run the application
+flask run</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4">
+        <div class="container text-center">
+            <p class="mb-0">Built with ❤️ as part of Harvard's CS50 course</p>
+            <p class="mb-0">Thank you Professor David J. Malan and the CS50 team!</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

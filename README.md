@@ -7,6 +7,11 @@ A comprehensive web application that simulates real stock trading using live mar
 ![Flask](https://img.shields.io/badge/Flask-2.0+-lightgrey)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-blue)
 
+## 🌐 Live Demo
+
+- **Project Demo**: [GitHub Pages](https://yourusername.github.io/cs50-finance)
+- **Live Application**: [Render.com](https://your-app-name.onrender.com) *(Coming Soon)*
+
 ## 🚀 Features
 
 ### Core Functionality

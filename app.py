@@ -53,9 +53,12 @@ def after_request(response):
 
 
 @app.route("/")
-@login_required
 def index():
     """Show portfolio of stocks"""
+    # Check if user is logged in
+    if "user_id" not in session:
+        return redirect("/login")
+    
     user_id = session["user_id"]
 
     transactions = db.execute(
